@@ -1,16 +1,46 @@
+import { db } from '../db';
+import { resumesTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type UpdateResumeInput, type Resume } from '../schema';
 
-export async function updateResume(input: UpdateResumeInput): Promise<Resume> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is updating an existing resume by ID and persisting changes in the database.
-  return Promise.resolve({
-    id: input.id,
-    user_id: 1, // Placeholder user ID
-    title: input.title || 'Placeholder Resume',
-    summary: input.summary !== undefined ? input.summary : null,
-    template_id: input.template_id !== undefined ? input.template_id : null,
-    is_public: input.is_public !== undefined ? input.is_public : false,
-    created_at: new Date(),
-    updated_at: new Date(),
-  } as Resume);
-}
+export const updateResume = async (input: UpdateResumeInput): Promise<Resume> => {
+  try {
+    // Build update object with only provided fields
+    const updateData: any = {};
+    
+    if (input.title !== undefined) {
+      updateData.title = input.title;
+    }
+    
+    if (input.summary !== undefined) {
+      updateData.summary = input.summary;
+    }
+    
+    if (input.template_id !== undefined) {
+      updateData.template_id = input.template_id;
+    }
+    
+    if (input.is_public !== undefined) {
+      updateData.is_public = input.is_public;
+    }
+    
+    // Always update the updated_at timestamp
+    updateData.updated_at = new Date();
+
+    // Update the resume record
+    const result = await db.update(resumesTable)
+      .set(updateData)
+      .where(eq(resumesTable.id, input.id))
+      .returning()
+      .execute();
+
+    if (result.length === 0) {
+      throw new Error(`Resume with id ${input.id} not found`);
+    }
+
+    return result[0];
+  } catch (error) {
+    console.error('Resume update failed:', error);
+    throw error;
+  }
+};

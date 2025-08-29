@@ -1,15 +1,24 @@
+import { db } from '../db';
+import { resumeTemplatesTable } from '../db/schema';
 import { type CreateResumeTemplateInput, type ResumeTemplate } from '../schema';
 
-export async function createResumeTemplate(input: CreateResumeTemplateInput): Promise<ResumeTemplate> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is creating a new resume template for customizing resume appearance and persisting it in the database.
-  return Promise.resolve({
-    id: 0, // Placeholder ID
-    name: input.name,
-    description: input.description || null,
-    css_styles: input.css_styles,
-    html_template: input.html_template,
-    is_active: input.is_active || true,
-    created_at: new Date(),
-  } as ResumeTemplate);
-}
+export const createResumeTemplate = async (input: CreateResumeTemplateInput): Promise<ResumeTemplate> => {
+  try {
+    // Insert resume template record
+    const result = await db.insert(resumeTemplatesTable)
+      .values({
+        name: input.name,
+        description: input.description,
+        css_styles: input.css_styles,
+        html_template: input.html_template,
+        is_active: input.is_active ?? true // Use nullish coalescing for proper default handling
+      })
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('Resume template creation failed:', error);
+    throw error;
+  }
+};

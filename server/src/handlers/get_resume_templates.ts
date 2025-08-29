@@ -1,7 +1,19 @@
+import { db } from '../db';
+import { resumeTemplatesTable } from '../db/schema';
 import { type ResumeTemplate } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function getResumeTemplates(): Promise<ResumeTemplate[]> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is fetching all active resume templates from the database for users to choose from.
-  return Promise.resolve([]);
-}
+export const getResumeTemplates = async (): Promise<ResumeTemplate[]> => {
+  try {
+    // Fetch only active resume templates
+    const result = await db.select()
+      .from(resumeTemplatesTable)
+      .where(eq(resumeTemplatesTable.is_active, true))
+      .execute();
+
+    return result;
+  } catch (error) {
+    console.error('Failed to fetch resume templates:', error);
+    throw error;
+  }
+};
